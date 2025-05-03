@@ -37,12 +37,11 @@ if 'preferences' not in st.session_state:
     movie_options = movie_meta['title'].dropna().unique().tolist()
     search_input = st.text_input("Start typing a movie title...")
 
-    # Match as user types
-    matched_movies = [m for m in movie_options if search_input.lower() in m.lower()]
-    if matched_movies:
-        selected_movie = st.selectbox("", matched_movies)  # No label here
-    else:
-        selected_movie = None
+    search_input = st.text_input("Start typing a movie title...")
+    
+    matched_movies = [m for m in movie_options if search_input.lower() == m.lower()]
+    
+    selected_movie = matched_movies[0] if matched_movies else None
 
     # 🎯 Confirm and Start
     if selected_movie and selected_genres and st.button("Submit"):
