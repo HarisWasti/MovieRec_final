@@ -15,13 +15,24 @@ FILES = {
 }
 
 def download_file(name, url):
-    local_path = os.path.join(DATA_DIR, name)
-    if not os.path.exists(local_path):
-        print(f"Downloading {name}...")
-        r = requests.get(url, allow_redirects=True)
-        with open(local_path, 'wb') as f:
-            f.write(r.content)
+    local_path = os.path.join("data", name)
+    if os.path.exists(local_path):
+        return local_path
+
+    print(f"Downloading {name} from OneDrive...")
+
+    # Follow OneDrive redirect
+    response = requests.get(url, allow_redirects=True)
+    
+    # Check if content looks like HTML (i.e., a failed redirect)
+    if "html" in response.text[:100].lower():
+        raise ValueError(f"{name} did not download properly — got HTML instead of CSV. Check the link.")
+
+    with open(local_path, "wb") as f:
+        f.write(response.content)
+
     return local_path
+
 
 def load_all_data():
     paths = {name: download_file(name, url) for name, url in FILES.items()}
