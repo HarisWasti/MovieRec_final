@@ -1,4 +1,3 @@
-pip install gdown
 import os
 import gdown
 import pandas as pd
@@ -25,7 +24,7 @@ def download_from_gdrive(name, file_id):
 
 def load_all_data():
     paths = {name: download_from_gdrive(name, fid) for name, fid in GDRIVE_FILES.items()}
-    
+
     return {
         "movie_meta": pd.read_csv(paths["movie_meta.csv"]),
         "tfidf_matrix": joblib.load(paths["tfidf_matrix.pkl"]),
