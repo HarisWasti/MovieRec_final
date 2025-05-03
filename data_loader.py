@@ -11,7 +11,7 @@ GDRIVE_FILES = {
     "tfidf_matrix.pkl": "1lja74H2YBPr5Tcm4UqKC4-YoIPHlRWzI",
     "user_movie_ratings.pkl": "1IaUqZmDGqUdxE3qced90h0Nkw0i0ZXKZ",
     "item_movie_matrix.pkl": "1wbBR92AYCCYciOnk1FaOvqBlszWK-lN4",
-    "knn_model.pkl": "1Yd5ucjTGxD9L4x1FYElPyil-f5uQHc4w"
+    "knn_model.pkl": "1caQ2s0bwzgON5mIs-LigIomZlS0sIgvs" 
 }
 
 def download_from_gdrive(name, file_id):
