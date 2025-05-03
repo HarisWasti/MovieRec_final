@@ -37,12 +37,17 @@ if 'preferences' not in st.session_state:
     movie_options = movie_meta['title'].dropna().unique().tolist()
     search_input = st.text_input("Start typing a movie title...")
 
-    # Match as user types
-    matched_movies = [m for m in movie_options if search_input.lower() in m.lower()]
-    if matched_movies:
-        selected_movie = st.selectbox("Matching movies:", matched_movies)
-    else:
-        selected_movie = None
+    # Match logic: find exact match or best fuzzy match
+    selected_movie = None
+    if search_input:
+        matched_movies = [m for m in movie_options if search_input.lower() in m.lower()]
+        if len(matched_movies) == 1:
+            selected_movie = matched_movies[0]
+        elif matched_movies:
+            st.markdown(f"Did you mean: **{matched_movies[0]}**?")
+            selected_movie = matched_movies[0]
+        else:
+            st.markdown("❌ No matching movie found.")
 
     # 🎯 3. Confirm and Start
     if selected_movie and selected_genres and st.button("Submit"):
@@ -56,7 +61,6 @@ if 'preferences' not in st.session_state:
         st.rerun()
 
     st.stop()
-
 
 # Step 2: Generate initial recommendations
 if 'recommendations' not in st.session_state:
