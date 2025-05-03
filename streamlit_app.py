@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import requests
 from rec_engine import hybrid_recommendations
 import joblib
 from scipy import sparse
@@ -77,8 +78,19 @@ for i, movie in enumerate(st.session_state['recommendations'][:9]):
     with col:
         movie_info = movie_meta[movie_meta['title'] == movie].iloc[0]
         with st.container():
-            if movie_info['poster_url']:
-                st.image(movie_info['poster_url'], use_container_width=True)
+            poster_url = movie_info['poster_url']
+            if poster_url:
+                try:
+                    response = requests.get(poster_url)
+                    if response.status_code == 200:
+                        st.image(poster_url, use_container_width=True)
+                    else:
+                        st.markdown("🖼️ *No poster available*")
+                except:
+                    st.markdown("🖼️ *No poster available*")
+            else:
+                st.markdown("🖼️ *No poster available*")
+
             st.markdown(f"**{movie}**")
 
             # Metadata
@@ -120,4 +132,3 @@ if st.button("🔁 Try Again with Different Preferences"):
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
-
