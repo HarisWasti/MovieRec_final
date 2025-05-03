@@ -90,19 +90,18 @@ for i, movie in enumerate(st.session_state['recommendations'][:9]):
                             "🖼️ <em>No poster available</em></div>",
                             unsafe_allow_html=True
                         )
-                        except:
-                            st.markdown(
-                                "<div style='height:300px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
-                                "🖼️ <em>No poster available</em></div>",
-                                unsafe_allow_html=True
-                            )
-                else:
+                except:
                     st.markdown(
                         "<div style='height:300px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
                         "🖼️ <em>No poster available</em></div>",
                         unsafe_allow_html=True
                     )
-
+            else:
+                st.markdown(
+                    "<div style='height:300px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
+                    "🖼️ <em>No poster available</em></div>",
+                    unsafe_allow_html=True
+                )
 
             st.markdown(f"**{movie}**")
 
