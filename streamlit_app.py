@@ -5,13 +5,17 @@ import requests
 from rec_engine import hybrid_recommendations
 import joblib
 from scipy import sparse
+from data_loader import load_all_data
+from rec_engine import hybrid_recommendations
 
-# Load preprocessed data
-movie_meta = pd.read_csv('data/movie_meta.csv')
-tfidf_matrix = joblib.load('data/tfidf_matrix.pkl')
-user_movie_ratings = joblib.load('data/user_movie_ratings.pkl')
-item_movie_matrix = joblib.load('data/item_movie_matrix.pkl')
-knn = joblib.load('data/knn_model.pkl')
+# Load all model/data files
+data = load_all_data()
+movie_meta = data["movie_meta"]
+tfidf_matrix = data["tfidf_matrix"]
+user_movie_ratings = data["user_movie_ratings"]
+item_movie_matrix = data["item_movie_matrix"]
+knn = data["knn"]
+
 
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 
