@@ -25,14 +25,14 @@ genre_chunks = [all_genres[i:i+genre_grid_cols] for i in range(0, len(all_genres
 if 'preferences' not in st.session_state:
     st.subheader("👋 Let's get to know your taste")
 
-    # 🎯 1. Genre Selection (allow multiple, no "no genre listed")
+    # 🎯 Genre Selection (multi-select, no 'no genre listed')
     all_genres = sorted(set(g for genre_list in movie_meta['genres'].dropna() for g in genre_list.split('|')))
     if 'no genre listed' in all_genres:
         all_genres.remove('no genre listed')
 
     selected_genres = st.multiselect("Select your favorite genre(s)", all_genres)
 
-    # 🎯 2. Movie Search with Live Feedback
+    # 🎯 Movie Search with Live Feedback
     st.markdown("### Type a favorite movie title")
     movie_options = movie_meta['title'].dropna().unique().tolist()
     search_input = st.text_input("Start typing a movie title...")
@@ -40,11 +40,11 @@ if 'preferences' not in st.session_state:
     # Match as user types
     matched_movies = [m for m in movie_options if search_input.lower() in m.lower()]
     if matched_movies:
-        selected_movie = st.selectbox("Matching movies:", matched_movies)
+        selected_movie = st.selectbox("", matched_movies)  # No label here
     else:
         selected_movie = None
 
-    # 🎯 3. Confirm and Start
+    # 🎯 Confirm and Start
     if selected_movie and selected_genres and st.button("Submit"):
         st.session_state['preferences'] = {
             'genre': selected_genres,
@@ -56,6 +56,7 @@ if 'preferences' not in st.session_state:
         st.rerun()
 
     st.stop()
+
 
 # Step 2: Generate initial recommendations
 if 'recommendations' not in st.session_state:
