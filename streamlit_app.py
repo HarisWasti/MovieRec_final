@@ -25,26 +25,33 @@ genre_chunks = [all_genres[i:i+genre_grid_cols] for i in range(0, len(all_genres
 if 'preferences' not in st.session_state:
     st.subheader("👋 Let's get to know your taste")
 
-    st.markdown("### Pick your favorite genre")
-    selected_genre = None
-    for row in genre_chunks:
-        cols = st.columns(genre_grid_cols)
-        for idx, genre in enumerate(row):
-            if cols[idx].button(genre):
-                selected_genre = genre
-                st.session_state['selected_genre'] = genre
+    # 🎯 1. Genre Selection (allow multiple, no "no genre listed")
+    all_genres = sorted(set(g for genre_list in movie_meta['genres'].dropna() for g in genre_list.split('|')))
+    if 'no genre listed' in all_genres:
+        all_genres.remove('no genre listed')
 
-    st.markdown("### Search for your favorite movie")
+    selected_genres = st.multiselect("Select your favorite genre(s)", all_genres)
+
+    # 🎯 2. Movie Search with Live Feedback
+    st.markdown("### Type a favorite movie title")
     movie_options = movie_meta['title'].dropna().unique().tolist()
-    fav_movie = st.selectbox("Select a movie", movie_options)
+    search_input = st.text_input("Start typing a movie title...")
 
-    if selected_genre and fav_movie and st.button("Submit"):
+    # Match as user types
+    matched_movies = [m for m in movie_options if search_input.lower() in m.lower()]
+    if matched_movies:
+        selected_movie = st.selectbox("Matching movies:", matched_movies)
+    else:
+        selected_movie = None
+
+    # 🎯 3. Confirm and Start
+    if selected_movie and selected_genres and st.button("Submit"):
         st.session_state['preferences'] = {
-            'genre': selected_genre,
-            'movie': fav_movie,
+            'genre': selected_genres,
+            'movie': selected_movie,
             'watched': [],
             'disliked': [],
-            'rec_index': 9  # start from the 10th when watched
+            'rec_index': 9  # for next-best recs
         }
         st.rerun()
 
@@ -100,3 +107,12 @@ for i, movie in enumerate(st.session_state['recommendations'][:9]):
                         st.session_state['recommendations'][i] = next_rec
                         break
                 st.rerun()
+
+# 🔁 Try Again
+st.markdown("---")
+if st.button("🔁 Try Again with Different Preferences"):
+    for key in ['preferences', 'recommendations']:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
+
