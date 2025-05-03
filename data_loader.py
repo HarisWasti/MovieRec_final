@@ -1,39 +1,33 @@
+pip install gdown
 import os
-import requests
-import joblib
+import gdown
 import pandas as pd
+import joblib
 
 DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
 
-FILES = {
-    "tfidf_matrix.pkl": "https://1drv.ms/u/c/db1fd89b1b4b1003/EVG4OzuqenVNhULl2X6cmBkB7480jSVYAircD2xFFD5dtQ?e=lpZdYy",
-    "user_movie_ratings.pkl": "https://1drv.ms/u/c/db1fd89b1b4b1003/EQ2sE32_Vt1Blsb_jWKSZ4wBxm8vBcEnB3e5rmIlr11hrg?e=okeeTG",
-    "item_movie_matrix.pkl": "https://1drv.ms/u/c/db1fd89b1b4b1003/EZRiwHAWPeBOuMgodFYrWTQBhsBXb8RQXzNJSGCJQQAGCA",
-    "knn_model.pkl": "https://1drv.ms/u/c/db1fd89b1b4b1003/ESrQLm8v_kFGiOXCuJttbdkBGX2sCCZScdcQONZzTvaMxg?e=5IE9HG"
+GDRIVE_FILES = {
+    "movie_meta.csv": "1K1k2fLwWu5xajBp2iuwtl0IICJc-5Mq4",
+    "tfidf_matrix.pkl": "1lja74H2YBPr5Tcm4UqKC4-YoIPHlRWzI",
+    "user_movie_ratings.pkl": "1IaUqZmDGqUdxE3qced90h0Nkw0i0ZXKZ",
+    "item_movie_matrix.pkl": "1wbBR92AYCCYciOnk1FaOvqBlszWK-lN4",
+    "knn_model.pkl": "1Yd5ucjTGxD9L4x1FYElPyil-f5uQHc4w"
 }
 
-def download_file(name, url):
+def download_from_gdrive(name, file_id):
     local_path = os.path.join(DATA_DIR, name)
-    if os.path.exists(local_path):
-        return local_path
-
-    print(f"Downloading {name}...")
-
-    r = requests.get(url, allow_redirects=True)
-    if "html" in r.text[:100].lower():
-        raise ValueError(f"{name} did not download properly — got HTML instead of file. Check the link.")
-
-    with open(local_path, "wb") as f:
-        f.write(r.content)
-
+    if not os.path.exists(local_path):
+        print(f"📦 Downloading {name} from Google Drive...")
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, local_path, quiet=False)
     return local_path
 
 def load_all_data():
-    paths = {name: download_file(name, url) for name, url in FILES.items()}
-
+    paths = {name: download_from_gdrive(name, fid) for name, fid in GDRIVE_FILES.items()}
+    
     return {
-        "movie_meta": pd.read_csv(os.path.join(DATA_DIR, "movie_meta.csv")),  # always local
+        "movie_meta": pd.read_csv(paths["movie_meta.csv"]),
         "tfidf_matrix": joblib.load(paths["tfidf_matrix.pkl"]),
         "user_movie_ratings": joblib.load(paths["user_movie_ratings.pkl"]),
         "item_movie_matrix": joblib.load(paths["item_movie_matrix.pkl"]),
