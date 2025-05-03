@@ -86,19 +86,19 @@ for i, movie in enumerate(st.session_state['recommendations'][:9]):
                         st.image(poster_url, use_container_width=True)
                     else:
                         st.markdown(
-                            "<div style='height:300px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
+                            "<div style='height:400px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
                             "🖼️ <em>No poster available</em></div>",
                             unsafe_allow_html=True
                         )
                 except:
                     st.markdown(
-                        "<div style='height:300px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
+                        "<div style='height:400px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
                         "🖼️ <em>No poster available</em></div>",
                         unsafe_allow_html=True
                     )
             else:
                 st.markdown(
-                    "<div style='height:300px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
+                    "<div style='height:400px; display:flex; align-items:center; justify-content:center; border:1px dashed #ccc;'>"
                     "🖼️ <em>No poster available</em></div>",
                     unsafe_allow_html=True
                 )
@@ -144,3 +144,4 @@ if st.button("🔁 Try Again with Different Preferences"):
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
+
