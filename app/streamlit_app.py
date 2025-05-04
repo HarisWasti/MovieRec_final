@@ -4,6 +4,7 @@ import numpy as np
 import joblib
 from scipy import sparse
 
+movie_meta = load_movie_meta()
 
 from data_loader import load_movie_meta, get_recommendations_from_db
 
