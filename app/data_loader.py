@@ -7,28 +7,35 @@ DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data')
 MOVIE_META_PATH = os.path.join(DATA_DIR, "movie_meta.csv")
 DB_PATH = os.path.join(DATA_DIR, "recommendations.db")
 
-def load_movie_meta():
-    print(f"📁 Trying to load movie_meta.csv from: {MOVIE_META_PATH}")
+import os
+import time
+import pandas as pd
 
-    if not os.path.exists(MOVIE_META_PATH):
-        raise FileNotFoundError(f"❌ File not found: {MOVIE_META_PATH}")
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+MOVIE_META_PATH = os.path.join(DATA_DIR, "movie_meta.csv")
 
-    size = os.path.getsize(MOVIE_META_PATH)
-    print(f"✅ File exists — Size: {size} bytes")
+def load_movie_meta(retries=3, delay=1.5):
+    for attempt in range(retries):
+        try:
+            if not os.path.exists(MOVIE_META_PATH):
+                raise FileNotFoundError(f"❌ movie_meta.csv not found at: {MOVIE_META_PATH}")
 
-    with open(MOVIE_META_PATH, "r", encoding="utf-8") as f:
-        preview = f.read(300)
-        print("📄 File preview:")
-        print(preview[:300])
+            if os.path.getsize(MOVIE_META_PATH) < 100:
+                raise ValueError("🚨 File too small to be valid — waiting for proper mount...")
 
-    try:
-        df = pd.read_csv(MOVIE_META_PATH)
-        print(f"✅ Loaded CSV with shape: {df.shape}")
-        print(f"🧠 Columns: {df.columns.tolist()}")
-        return df
-    except Exception as e:
-        print("❌ pandas.read_csv() failed!")
-        raise e
+            df = pd.read_csv(MOVIE_META_PATH)
+            if df.empty or len(df.columns) < 3:
+                raise ValueError("🚨 CSV file loaded but has no columns or data.")
+            
+            print(f"✅ movie_meta.csv loaded with shape: {df.shape}")
+            return df
+
+        except Exception as e:
+            print(f"⚠️ Attempt {attempt+1}/{retries} failed: {e}")
+            time.sleep(delay)
+
+    raise RuntimeError("❌ Failed to load movie_meta.csv after retries.")
+
 
 
 def get_recommendations_from_db(title, db_path=DB_PATH):
