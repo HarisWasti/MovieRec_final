@@ -8,10 +8,17 @@ def search_movie(title_input, movie_meta):
     filtered = movie_meta[movie_meta['title'].str.lower().str.contains(title_input, regex=False)]
     return filtered['title'].iloc[0] if not filtered.empty else None
 
+# 🧠 For real-time user input
 def hybrid_recommendations(title_input, movie_meta, tfidf_matrix, user_movie_ratings, item_movie_matrix, knn, alpha=0.4, top_n=100):
     title = search_movie(title_input, movie_meta)
     if not title:
-        return []
+        return ["Movie title not found."]
+    return hybrid_recommendations_by_title(title, movie_meta, tfidf_matrix, user_movie_ratings, item_movie_matrix, knn, alpha, top_n)
+
+# ✅ For precomputed recs (skips fuzzy search)
+def hybrid_recommendations_by_title(title, movie_meta, tfidf_matrix, user_movie_ratings, item_movie_matrix, knn, alpha=0.4, top_n=20):
+    if title not in movie_meta['title'].values:
+        return ["Movie title not found."]
 
     idx = movie_meta[movie_meta['title'] == title].index[0]
     movie_id = movie_meta.loc[idx, 'movieId']
@@ -38,6 +45,7 @@ def hybrid_recommendations(title_input, movie_meta, tfidf_matrix, user_movie_rat
 
     return movie_meta['title'].iloc[top_hybrid_indices[:top_n]].tolist()
 
+# SQLite fetcher
 def get_recommendations_from_db(title, db_path="data/precomputed_recs.db"):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -45,3 +53,4 @@ def get_recommendations_from_db(title, db_path="data/precomputed_recs.db"):
     row = cursor.fetchone()
     conn.close()
     return json.loads(row[0]) if row else []
+
