@@ -45,12 +45,19 @@ def hybrid_recommendations_by_title(title, movie_meta, tfidf_matrix, user_movie_
 
     return movie_meta['title'].iloc[top_hybrid_indices[:top_n]].tolist()
 
-# SQLite fetcher
-def get_recommendations_from_db(title, db_path="data/precomputed_recs.db"):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT recommendations FROM recs WHERE title = ?", (title,))
-    row = cursor.fetchone()
-    conn.close()
-    return json.loads(row[0]) if row else []
+def get_recommendations_from_db(movie_title, db_path="data/recommendations.db"):
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT recommendations FROM recommendations WHERE movie_title = ?", (movie_title,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return row[0].split('|')
+        return []
+    except Exception as e:
+        print(f"Error fetching from DB: {e}")
+        return []
+
 
