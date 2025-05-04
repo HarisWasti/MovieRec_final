@@ -1,80 +1,102 @@
 import streamlit as st
 import pandas as pd
-import requests
-from data_loader import load_all_data
-from rec_engine import get_recommendations_from_db
+import numpy as np
+from rec_engine import hybrid_recommendations
+import joblib
+from scipy import sparse
 
-# Set up Streamlit page
+# Load preprocessed data
+movie_meta = pd.read_csv('data/movie_meta.csv')
+tfidf_matrix = joblib.load('data/tfidf_matrix.pkl')
+user_movie_ratings = joblib.load('data/user_movie_ratings.pkl')
+item_movie_matrix = joblib.load('data/item_movie_matrix.pkl')
+knn = joblib.load('data/knn_model.pkl')
+
 st.set_page_config(page_title="Movie Recommender", layout="wide")
-st.title("🎬 Movie Recommendation System")
 
-# Load required data
-data = load_all_data()
-movie_meta = data["movie_meta"]
+st.title("🎬 Movie Recommendation System (Session-Based)")
 
-# Session State Initialization
-st.session_state.setdefault('preferences', {})
-st.session_state.setdefault('recommendations', [])
+# Helper for genre selection
+all_genres = sorted(set(g for genre_list in movie_meta['genres'].dropna() for g in genre_list.split('|')))
+genre_grid_cols = 3
+genre_chunks = [all_genres[i:i+genre_grid_cols] for i in range(0, len(all_genres), genre_grid_cols)]
 
-# Step 1: Ask for movie only
-if 'movie' not in st.session_state['preferences']:
-    st.subheader("👋 What's one movie you liked?")
+# Step 1: Cold Start Questions
+if 'preferences' not in st.session_state:
+    st.subheader("👋 Let's get to know your taste")
 
-    search_input = st.text_input("🔍 Type a movie title")
+    st.markdown("### Pick your favorite genre")
+    selected_genre = None
+    for row in genre_chunks:
+        cols = st.columns(genre_grid_cols)
+        for idx, genre in enumerate(row):
+            if cols[idx].button(genre):
+                selected_genre = genre
+                st.session_state['selected_genre'] = genre
+
+    st.markdown("### Search for your favorite movie")
     movie_options = movie_meta['title'].dropna().unique().tolist()
-    matched_movies = [m for m in movie_options if search_input.lower() in m.lower()]
+    fav_movie = st.selectbox("Select a movie", movie_options)
 
-    if matched_movies:
-        for m in matched_movies[:10]:  # Show top 10 buttons
-            if st.button(m):
-                st.session_state['preferences'] = {'movie': m}
-                st.session_state['recommendations'] = get_recommendations_from_db(m)
-                st.rerun()
-    elif search_input:
-        st.warning("❌ No matching movie found.")
+    if selected_genre and fav_movie and st.button("Submit"):
+        st.session_state['preferences'] = {
+            'genre': selected_genre,
+            'movie': fav_movie,
+            'watched': [],
+            'disliked': [],
+            'rec_index': 9  # start from the 10th when watched
+        }
+        st.rerun()
+
     st.stop()
 
-# Step 2: Show 4x5 Grid of Recommendations
-recs = st.session_state['recommendations']
+# Step 2: Generate initial recommendations
+if 'recommendations' not in st.session_state:
+    initial_movie = st.session_state['preferences']['movie']
+    st.session_state['recommendations'] = hybrid_recommendations(
+        initial_movie, movie_meta, tfidf_matrix, user_movie_ratings, item_movie_matrix, knn)
 
-if not recs:
-    st.error("No recommendations found.")
-    st.stop()
+# Step 3: Display 3x3 Grid of Recommendations
+st.subheader("🎥 Recommended Movies for You")
+cols = st.columns(3)
 
-st.subheader(f"🎥 Because you liked **{st.session_state['preferences']['movie']}**...")
-
-cols = st.columns(4)
-for idx, movie in enumerate(recs[:20]):
-    col = cols[idx % 4]
+for i, movie in enumerate(st.session_state['recommendations'][:9]):
+    col = cols[i % 3]
     with col:
-        movie_info = movie_meta[movie_meta['title'] == movie]
-        if movie_info.empty:
-            continue
-        movie_info = movie_info.iloc[0]
+        movie_info = movie_meta[movie_meta['title'] == movie].iloc[0]
+        with st.container():
+            if movie_info['poster_url']:
+                st.image(movie_info['poster_url'], use_container_width=True)
+            st.markdown(f"**{movie}**")
 
-        poster_url = movie_info.get("poster_url", None)
-        if poster_url:
-            try:
-                response = requests.get(poster_url)
-                if response.status_code == 200:
-                    st.image(poster_url, use_container_width=True)
-                else:
-                    st.markdown("🖼️ *No poster*")
-            except:
-                st.markdown("🖼️ *No poster*")
-        else:
-            st.markdown("🖼️ *No poster*")
+            # Metadata
+            meta_str = f"🎬 {movie_info['genres']} | 👨‍🎓 {movie_info['director']} | 🔞 {movie_info['age_rating'] or 'N/A'}"
+            st.caption(meta_str)
 
-        st.markdown(f"**{movie}**")
-        st.caption(f"🎬 {movie_info['genres']} | 👨‍🎓 {movie_info['director']} | 🔞 {movie_info['age_rating'] or 'N/A'}")
+            # Hoverable description (flip-like)
+            if movie_info['description']:
+                with st.expander("🛈 Description"):
+                    st.write(movie_info['description'])
 
-        if movie_info['description']:
-            with st.expander("🛈 Description"):
-                st.write(movie_info['description'])
+            col1, col2 = st.columns(2)
+            if col1.button("✅ Watched", key=f"watched_{i}"):
+                st.session_state['preferences']['watched'].append(movie)
+                recs = st.session_state['recommendations']
+                while st.session_state['preferences']['rec_index'] < len(recs):
+                    next_rec = recs[st.session_state['preferences']['rec_index']]
+                    st.session_state['preferences']['rec_index'] += 1
+                    if next_rec not in recs[:9]:
+                        st.session_state['recommendations'][i] = next_rec
+                        break
+                st.rerun()
 
-# Try again
-st.markdown("---")
-if st.button("🔁 Try Again with Different Movie"):
-    for key in ['preferences', 'recommendations']:
-        st.session_state.pop(key, None)
-    st.rerun()
+            if col2.button("🚫 Not Interested", key=f"disliked_{i}"):
+                st.session_state['preferences']['disliked'].append(movie)
+                recs = st.session_state['recommendations']
+                while st.session_state['preferences']['rec_index'] < len(recs):
+                    next_rec = recs[st.session_state['preferences']['rec_index']]
+                    st.session_state['preferences']['rec_index'] += 1
+                    if next_rec not in recs[:9]:
+                        st.session_state['recommendations'][i] = next_rec
+                        break
+                st.rerun()
