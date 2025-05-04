@@ -1,0 +1,16 @@
+# Ignore large files and model data
+data/*.pkl
+data/*.csv
+data/*.db
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store
+Thumbs.db
