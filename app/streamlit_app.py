@@ -48,9 +48,9 @@ for idx, movie in enumerate(recs[:20]):
             continue
         movie_info = movie_info.iloc[0]
 
-        if movie_info['poster_url']:
-            st.image(movie_info['poster_url'], use_container_width=True)
-        st.markdown(f"**{movie}**")
+        if not safe_image_display(movie_info['poster_url']):
+            st.markdown("🖼️ *Poster unavailable*")
+            st.markdown(f"**{movie}**")
 
         meta_str = f"🎬 {movie_info['genres']} | 👨‍🎓 {movie_info['director']} | 🔞 {movie_info['age_rating'] or 'N/A'}"
         st.caption(meta_str)
