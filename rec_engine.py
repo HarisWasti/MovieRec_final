@@ -1,13 +1,12 @@
-# rec_engine.py
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+import sqlite3
+import json
 
 def search_movie(title_input, movie_meta):
     title_input = title_input.lower()
     filtered = movie_meta[movie_meta['title'].str.lower().str.contains(title_input, regex=False)]
     return filtered['title'].iloc[0] if not filtered.empty else None
-
-from sklearn.metrics.pairwise import cosine_similarity
 
 def hybrid_recommendations(title_input, movie_meta, tfidf_matrix, user_movie_ratings, item_movie_matrix, knn, alpha=0.4, top_n=100):
     title = search_movie(title_input, movie_meta)
@@ -41,4 +40,17 @@ def hybrid_recommendations(title_input, movie_meta, tfidf_matrix, user_movie_rat
     top_hybrid_indices = relevant_indices[np.argsort(hybrid_score[relevant_indices])[::-1][:top_n]]
 
     return movie_meta['title'].iloc[top_hybrid_indices[:9]].tolist()
+
+
+# ✅ NEW: Precomputed SQLite-based recommendations
+def get_recommendations_from_db(title, db_path="data/precomputed_recs.db"):
+    """
+    Fetches the precomputed top-N recommendations from the SQLite database.
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT recommendations FROM recs WHERE title = ?", (title,))
+    row = cursor.fetchone()
+    conn.close()
+    return json.loads(row[0]) if row else []
 
