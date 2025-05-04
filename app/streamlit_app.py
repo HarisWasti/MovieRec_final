@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from rec_engine import hybrid_recommendations
 import joblib
 from scipy import sparse
 
