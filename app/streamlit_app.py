@@ -62,9 +62,9 @@ for idx, movie in enumerate(recs[:20]):
         if movie_info.empty:
             continue
         movie_info = movie_info.iloc[0]
-        
+
         image_height = 300
-        
+
         with st.container():
             if not safe_image_display(movie_info['poster_url']):
                 st.markdown(
@@ -72,14 +72,16 @@ for idx, movie in enumerate(recs[:20]):
                     '🖼️ <i>Poster unavailable</i></div>',
                     unsafe_allow_html=True
                 )
-                st.markdown(f"**{movie}**")
 
-        meta_str = f"🎬 {movie_info['genres']} | 👨‍🎓 {movie_info['director']} | 🔞 {movie_info['age_rating'] or 'N/A'}"
-        st.caption(meta_str)
+            # ✅ Show title and metadata always
+            st.markdown(f"**{movie}**")
+            meta_str = f"🎬 {movie_info['genres']} | 👨‍🎓 {movie_info['director']} | 🔞 {movie_info['age_rating'] or 'N/A'}"
+            st.caption(meta_str)
 
-        if movie_info['description']:
-            with st.expander("🛈 Description"):
-                st.write(movie_info['description'])
+            if movie_info['description']:
+                with st.expander("🛈 Description"):
+                    st.write(movie_info['description'])
+
 
 # Option to restart
 st.markdown("---")
