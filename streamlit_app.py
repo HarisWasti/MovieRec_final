@@ -9,11 +9,30 @@ from scipy import sparse
 from data_loader import load_all_data
 from rec_engine import hybrid_recommendations
 
+# 🔧 Session-safe init (✅ Add this early!)
+st.set_page_config(page_title="Movie Recommender", layout="wide")
+
+# Initialize session state keys to prevent KeyErrors
+st.session_state.setdefault('preferences', {
+    'genre': [],
+    'movie': '',
+    'watched': [],
+    'rec_index': 9
+})
+st.session_state.setdefault('recommendations', [])
+
+# Load all model/data files
+data = load_all_data()
+movie_meta = data["movie_meta"]
+tfidf_matrix = data["tfidf_matrix"]
+user_movie_ratings = data["user_movie_ratings"]
+item_movie_matrix = data["item_movie_matrix"]
+knn = data["knn"]
+
 # Step 2: Generate recommendations only if 'preferences' exists
-if 'preferences' in st.session_state and 'recommendations' not in st.session_state:
+if st.session_state['preferences']['movie'] and not st.session_state['recommendations']:
     initial_movie = st.session_state['preferences']['movie']
     st.session_state['recommendations'] = get_recommendations_from_db(initial_movie)
-
 
 # Step 3: Display 3x3 Grid of Recommendations
 st.subheader("🎥 Recommended Movies for You")
