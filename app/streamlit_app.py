@@ -2,6 +2,21 @@ import streamlit as st
 import pandas as pd
 from data_loader import load_movie_meta, get_recommendations_from_db
 
+import requests
+from PIL import Image
+from io import BytesIO
+
+def safe_image_display(url):
+    try:
+        if not url or not isinstance(url, str) or url.strip() == "":
+            return False
+        response = requests.get(url, timeout=5)
+        img = Image.open(BytesIO(response.content))
+        st.image(img, use_container_width=True)
+        return True
+    except:
+        return False
+
 # Load metadata
 movie_meta = load_movie_meta()
 
