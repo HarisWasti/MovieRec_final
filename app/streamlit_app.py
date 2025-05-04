@@ -5,15 +5,9 @@ from rec_engine import hybrid_recommendations
 import joblib
 from scipy import sparse
 
-from data_loader import load_all_data
 
+from data_loader import load_movie_meta, get_recommendations_from_db
 
-data = load_all_data()
-movie_meta = data["movie_meta"]
-tfidf_matrix = data["tfidf_matrix"]
-user_movie_ratings = data["user_movie_ratings"]
-item_movie_matrix = data["item_movie_matrix"]
-knn = data["knn"]
 
 
 st.set_page_config(page_title="Movie Recommender", layout="wide")
