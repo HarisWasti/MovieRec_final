@@ -8,10 +8,12 @@ import joblib
 from scipy import sparse
 from data_loader import load_all_data
 from rec_engine import hybrid_recommendations
-# Step 2: Generate initial recommendations from SQLite
-if 'recommendations' not in st.session_state:
+
+# Step 2: Generate recommendations only if 'preferences' exists
+if 'preferences' in st.session_state and 'recommendations' not in st.session_state:
     initial_movie = st.session_state['preferences']['movie']
     st.session_state['recommendations'] = get_recommendations_from_db(initial_movie)
+
 
 # Step 3: Display 3x3 Grid of Recommendations
 st.subheader("🎥 Recommended Movies for You")
