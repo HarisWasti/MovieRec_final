@@ -11,16 +11,14 @@ def search_movie(title_input, movie_meta):
 def hybrid_recommendations(title_input, movie_meta, tfidf_matrix, user_movie_ratings, item_movie_matrix, knn, alpha=0.4, top_n=100):
     title = search_movie(title_input, movie_meta)
     if not title:
-        return ["Movie title not found."]
+        return []
 
     idx = movie_meta[movie_meta['title'] == title].index[0]
     movie_id = movie_meta.loc[idx, 'movieId']
 
-    # CONTENT-BASED: limit to top_n
     content_sim = cosine_similarity(tfidf_matrix[idx], tfidf_matrix).flatten()
     top_content_indices = np.argpartition(-content_sim, top_n)[:top_n]
 
-    # CF: limit to KNN result
     movie_idx_cf = user_movie_ratings.columns.get_loc(movie_id)
     movie_vector = item_movie_matrix.values[movie_idx_cf].reshape(1, -1)
     distances, indices_cf = knn.kneighbors(movie_vector, n_neighbors=top_n + 1)
@@ -35,22 +33,15 @@ def hybrid_recommendations(title_input, movie_meta, tfidf_matrix, user_movie_rat
     hybrid_score = alpha * cf_scores + (1 - alpha) * content_sim
     hybrid_score[idx] = -1
 
-    # Restrict score computation to only relevant indices
     relevant_indices = np.union1d(top_content_indices, indices_cf.flatten()[1:])
     top_hybrid_indices = relevant_indices[np.argsort(hybrid_score[relevant_indices])[::-1][:top_n]]
 
     return movie_meta['title'].iloc[top_hybrid_indices[:top_n]].tolist()
 
-
-# ✅ NEW: Precomputed SQLite-based recommendations
 def get_recommendations_from_db(title, db_path="data/precomputed_recs.db"):
-    """
-    Fetches the precomputed top-N recommendations from the SQLite database.
-    """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("SELECT recommendations FROM recs WHERE title = ?", (title,))
     row = cursor.fetchone()
     conn.close()
     return json.loads(row[0]) if row else []
-
