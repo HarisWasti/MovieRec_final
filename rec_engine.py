@@ -39,7 +39,7 @@ def hybrid_recommendations(title_input, movie_meta, tfidf_matrix, user_movie_rat
     relevant_indices = np.union1d(top_content_indices, indices_cf.flatten()[1:])
     top_hybrid_indices = relevant_indices[np.argsort(hybrid_score[relevant_indices])[::-1][:top_n]]
 
-    return movie_meta['title'].iloc[top_hybrid_indices[:9]].tolist()
+    return movie_meta['title'].iloc[top_hybrid_indices[:top_n]].tolist()
 
 
 # ✅ NEW: Precomputed SQLite-based recommendations
