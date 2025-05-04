@@ -5,7 +5,8 @@ from rec_engine import hybrid_recommendations
 import joblib
 from scipy import sparse
 
-from app.data_loader import load_all_data
+from data_loader import load_all_data
+
 
 data = load_all_data()
 movie_meta = data["movie_meta"]
