@@ -1,17 +1,11 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import joblib
-from scipy import sparse
-
-movie_meta = load_movie_meta()
-
 from data_loader import load_movie_meta, get_recommendations_from_db
 
-
+# Load movie metadata once at the top
+movie_meta = load_movie_meta()
 
 st.set_page_config(page_title="Movie Recommender", layout="wide")
-
 st.title("🎬 Movie Recommendation System (Session-Based)")
 
 # Helper for genre selection
@@ -42,17 +36,16 @@ if 'preferences' not in st.session_state:
             'movie': fav_movie,
             'watched': [],
             'disliked': [],
-            'rec_index': 9  # start from the 10th when watched
+            'rec_index': 9
         }
         st.rerun()
 
     st.stop()
 
-# Step 2: Generate initial recommendations
+# Step 2: Get precomputed recommendations from DB
 if 'recommendations' not in st.session_state:
     initial_movie = st.session_state['preferences']['movie']
-    st.session_state['recommendations'] = hybrid_recommendations(
-        initial_movie, movie_meta, tfidf_matrix, user_movie_ratings, item_movie_matrix, knn)
+    st.session_state['recommendations'] = get_recommendations_from_db(initial_movie)
 
 # Step 3: Display 3x3 Grid of Recommendations
 st.subheader("🎥 Recommended Movies for You")
@@ -61,17 +54,18 @@ cols = st.columns(3)
 for i, movie in enumerate(st.session_state['recommendations'][:9]):
     col = cols[i % 3]
     with col:
-        movie_info = movie_meta[movie_meta['title'] == movie].iloc[0]
+        movie_info = movie_meta[movie_meta['title'] == movie]
+        if movie_info.empty:
+            continue
+        movie_info = movie_info.iloc[0]
         with st.container():
             if movie_info['poster_url']:
                 st.image(movie_info['poster_url'], use_container_width=True)
             st.markdown(f"**{movie}**")
 
-            # Metadata
             meta_str = f"🎬 {movie_info['genres']} | 👨‍🎓 {movie_info['director']} | 🔞 {movie_info['age_rating'] or 'N/A'}"
             st.caption(meta_str)
 
-            # Hoverable description (flip-like)
             if movie_info['description']:
                 with st.expander("🛈 Description"):
                     st.write(movie_info['description'])
@@ -98,3 +92,4 @@ for i, movie in enumerate(st.session_state['recommendations'][:9]):
                         st.session_state['recommendations'][i] = next_rec
                         break
                 st.rerun()
+
