@@ -2,7 +2,8 @@ import os
 import pandas as pd
 import sqlite3
 
-DATA_DIR = "data"
+# 👇 Resolve the 'data' folder relative to this file
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
 
 def load_movie_meta():
     return pd.read_csv(os.path.join(DATA_DIR, "movie_meta.csv"))
@@ -20,3 +21,4 @@ def get_recommendations_from_db(title, db_path=os.path.join(DATA_DIR, "recommend
     except Exception as e:
         print(f"Error: {e}")
         return []
+print("Loading from:", os.path.join(DATA_DIR, "movie_meta.csv"))
