@@ -63,7 +63,7 @@ for idx, movie in enumerate(recs[:20]):
             continue
         movie_info = movie_info.iloc[0]
 
-        image_height = 550
+        image_height = 560
 
         with st.container():
             if not safe_image_display(movie_info['poster_url']):
