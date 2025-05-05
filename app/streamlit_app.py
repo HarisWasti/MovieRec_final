@@ -45,10 +45,10 @@ if 'preferences' not in st.session_state:
 st.subheader(f"Because you liked {st.session_state['preferences']['movie']}")
 
 recs = st.session_state['recommendations']
-cols = st.columns(4)
+cols = st.columns(3)  # 3 columns for a 3x3 grid
 
-for idx, movie in enumerate(recs[:20]):
-    col = cols[idx % 4]
+for idx, movie in enumerate(recs[:9]):
+    col = cols[idx % 3]
     with col:
         movie_info = movie_meta[movie_meta['title'] == movie]
         if movie_info.empty:
@@ -73,6 +73,7 @@ for idx, movie in enumerate(recs[:20]):
             if movie_info['description']:
                 with st.expander("Description"):
                     st.write(movie_info['description'])
+
 
 # Option to restart
 st.markdown("---")
