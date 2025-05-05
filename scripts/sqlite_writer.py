@@ -38,8 +38,9 @@ def process_movie(title):
             item_movie_matrix,
             knn,
             alpha=0.6,
-            top_n=20
+            top_n=9
         )
+
         if isinstance(recs, list) and recs[0] != "Movie title not found.":
             return (title, '|'.join(recs))
     except:
