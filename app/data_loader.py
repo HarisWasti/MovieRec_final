@@ -1,4 +1,4 @@
-iimport pandas as pd
+import pandas as pd
 import joblib
 
 def load_movie_meta():
