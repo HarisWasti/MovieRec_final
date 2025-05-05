@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from data_loader import load_movie_meta, get_recommendations_from_db
+from data_loader import load_movie_meta, load_tfidf_matrix
+from rec_engine import cold_start_recommendations
 
 import requests
 from PIL import Image
@@ -17,35 +18,41 @@ def safe_image_display(url):
     except:
         return False
 
-# Load metadata
+# Load data
 movie_meta = load_movie_meta()
+tfidf_matrix = load_tfidf_matrix()
 
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 st.title("Movie Recommendation System")
 
-# Step 1: Cold Start Input
-if 'preferences' not in st.session_state:
-    st.subheader("Start by selecting a movie you liked")
+# Step 1: Input genre and movie preferences
+if 'recommendations' not in st.session_state:
+    st.subheader("Tell us what you like")
 
-    # Movie Selection (mandatory)
-    st.markdown("### Select a movie you liked")
-    movie_options = movie_meta['title'].dropna().unique().tolist()
-    fav_movie = st.selectbox("Choose a movie", movie_options)
+    # Genre selection
+    st.markdown("### Pick at least one genre (you can select more):")
+    genres_list = sorted(set("|".join(movie_meta['genres'].dropna()).split('|')))
+    selected_genres = st.multiselect("Select genres", genres_list)
 
-    # Submit only if movie selected
-    if fav_movie and st.button("Submit"):
-        st.session_state['preferences'] = {
-            'movie': fav_movie
-        }
-        st.session_state['recommendations'] = get_recommendations_from_db(fav_movie)
-        st.rerun()
+    # Movie search with autocomplete
+    st.markdown("### Pick movies you enjoy (up to 10):")
+    all_titles = movie_meta['title'].dropna().unique().tolist()
+    selected_movies = []
+    for i in range(1, 11):
+        movie = st.selectbox(f"Pick movie {i}", [""] + all_titles, key=f"movie_{i}")
+        if movie and movie not in selected_movies:
+            selected_movies.append(movie)
+        if len(selected_movies) > 0 and st.button("Get Recommendations"):
+            st.session_state['recommendations'] = cold_start_recommendations(selected_genres, selected_movies, tfidf_matrix, movie_meta)
+            st.session_state['selected_movies'] = selected_movies
+            break
     st.stop()
 
 # Step 2: Show Recommendations
-st.subheader(f"Because you liked {st.session_state['preferences']['movie']}")
+st.subheader("Recommended for you:")
 
 recs = st.session_state['recommendations']
-cols = st.columns(3)  # 3 columns for a 3x3 grid
+cols = st.columns(3)
 
 for idx, movie in enumerate(recs[:9]):
     col = cols[idx % 3]
@@ -56,16 +63,14 @@ for idx, movie in enumerate(recs[:9]):
         movie_info = movie_info.iloc[0]
 
         image_height = 625
-
         with st.container():
-            if not safe_image_display(movie_info['poster_url']):
+            if not safe_image_display(movie_info.get('poster_url', '')):
                 st.markdown(
                     f'<div style="height:{image_height}px; display:flex; align-items:center; justify-content:center; background-color:#eee; border:1px solid #ccc;">'
                     'Poster unavailable</div>',
                     unsafe_allow_html=True
                 )
 
-            # Show title and metadata
             st.markdown(f"**{movie}**")
             meta_str = f"{movie_info['genres']} | {movie_info['director']} | {movie_info['age_rating'] or 'N/A'}"
             st.caption(meta_str)
@@ -74,10 +79,9 @@ for idx, movie in enumerate(recs[:9]):
                 with st.expander("Description"):
                     st.write(movie_info['description'])
 
-
-# Option to restart
+# Reset option
 st.markdown("---")
 if st.button("Try Again"):
-    for key in ['preferences', 'recommendations']:
+    for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
