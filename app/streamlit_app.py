@@ -36,11 +36,9 @@ if 'recommendations' not in st.session_state:
     # Movie search with autocomplete
     st.markdown("### Pick movies you enjoy (up to 10):")
     all_titles = movie_meta['title'].dropna().unique().tolist()
-    selected_movies = []
-    for i in range(1, 11):
-        movie = st.selectbox(f"Pick movie {i}", [""] + all_titles, key=f"movie_{i}")
-        if movie and movie not in selected_movies:
-            selected_movies.append(movie)
+    selected_movie = st.selectbox("Pick one movie you enjoy", [""] + all_titles)
+    selected_movies = [selected_movie] if selected_movie else []
+
 
     if len(selected_movies) > 0 and st.button("Get Recommendations"):
         st.session_state['recommendations'] = cold_start_recommendations(selected_genres, selected_movies, tfidf_matrix, movie_meta)
