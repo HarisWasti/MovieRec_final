@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from data_loader import load_movie_meta, load_tfidf_matrix
 from rec_engine import cold_start_recommendations
-
 import requests
 from PIL import Image
 from io import BytesIO
@@ -42,10 +41,11 @@ if 'recommendations' not in st.session_state:
         movie = st.selectbox(f"Pick movie {i}", [""] + all_titles, key=f"movie_{i}")
         if movie and movie not in selected_movies:
             selected_movies.append(movie)
-        if len(selected_movies) > 0 and st.button("Get Recommendations"):
-            st.session_state['recommendations'] = cold_start_recommendations(selected_genres, selected_movies, tfidf_matrix, movie_meta)
-            st.session_state['selected_movies'] = selected_movies
-            break
+
+    if len(selected_movies) > 0 and st.button("Get Recommendations"):
+        st.session_state['recommendations'] = cold_start_recommendations(selected_genres, selected_movies, tfidf_matrix, movie_meta)
+        st.session_state['selected_movies'] = selected_movies
+        st.rerun()
     st.stop()
 
 # Step 2: Show Recommendations
@@ -85,3 +85,4 @@ if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
+
