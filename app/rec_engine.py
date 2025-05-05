@@ -1,50 +1,30 @@
-from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
-def search_movie(title_input, movie_meta):
-    title_input = title_input.lower()
-    filtered = movie_meta[movie_meta['title'].str.lower().str.contains(title_input, regex=False)]
-    return filtered['title'].iloc[0] if not filtered.empty else None
+def cold_start_recommendations(fav_genres, fav_movies, tfidf_matrix, movie_meta, alpha=0.5, k=9):
+    genre_bonus = movie_meta['genres'].str.contains('|'.join(fav_genres), case=False, na=False).astype(float)
 
-def hybrid_recommendations_by_title(
-    title_input,
-    movie_meta,
-    tfidf_matrix,
-    user_movie_ratings,
-    item_movie_matrix,
-    knn,
-    alpha=0.6,
-    top_n=9
-):
-    title = search_movie(title_input, movie_meta)
-    if not title:
-        return ["Movie title not found."]
+    scores = np.zeros(tfidf_matrix.shape[0])
+    valid_titles = 0
 
-    idx = movie_meta[movie_meta['title'] == title].index[0]
-    movie_id = movie_meta.loc[idx, 'movieId']
+    for title in fav_movies:
+        match = movie_meta[movie_meta['title'].str.lower().str.contains(title.lower(), regex=False, na=False)]
+        if not match.empty:
+            idx = match.index[0]
+            sim = cosine_similarity(tfidf_matrix[idx], tfidf_matrix).flatten()
+            scores += sim
+            valid_titles += 1
 
-    # Content-based similarity
-    content_sim = cosine_similarity(tfidf_matrix[idx], tfidf_matrix).flatten()
+    if valid_titles == 0:
+        return []
 
-    # Collaborative filtering similarity
-    movie_idx_cf = user_movie_ratings.columns.get_loc(movie_id)
-    movie_vector = item_movie_matrix.values[movie_idx_cf].reshape(1, -1)
-    distances, indices_cf = knn.kneighbors(movie_vector, n_neighbors=11)
+    scores /= valid_titles
+    scores += 0.1 * genre_bonus.values
 
-    cf_scores = np.zeros_like(content_sim)
-    for i, cf_idx in enumerate(indices_cf.flatten()[1:]):
-        sim = 1 - distances.flatten()[i + 1]
-        cf_scores[cf_idx] = sim
+    # Remove the original movies from results
+    fav_indices = movie_meta[movie_meta['title'].str.lower().isin([t.lower() for t in fav_movies])].index
+    scores[fav_indices] = -1
 
-    # Normalize both similarity scores
-    content_sim /= content_sim.max()
-    cf_scores /= cf_scores.max() if cf_scores.max() != 0 else 1
+    top_indices = scores.argsort()[::-1][:k]
+    return movie_meta['title'].iloc[top_indices].tolist()
 
-    # Hybrid weighted score
-    hybrid_score = alpha * cf_scores + (1 - alpha) * content_sim
-
-    # Exclude the input movie
-    hybrid_score[idx] = -1
-
-    similar_indices = hybrid_score.argsort()[::-1][:top_n]
-    return movie_meta['title'].iloc[similar_indices].tolist()
