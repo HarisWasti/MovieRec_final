@@ -9,29 +9,19 @@ from PIL import Image
 from io import BytesIO
 
 # --- Safe image rendering ---
-PLACEHOLDER_POSTER_URL = "https://i.imgur.com/fvsXb7X.jpg"
-
 def safe_image_display(url):
     try:
-        if not isinstance(url, str) or url.strip().lower() in {"", "nan", "none"}:
-            raise ValueError("Invalid URL")
+        if not url or not isinstance(url, str) or url.strip() == "":
+            return False
         response = requests.get(url, timeout=5)
         img = Image.open(BytesIO(response.content))
         st.image(img, use_container_width=True)
         return True
     except:
-        try:
-            response = requests.get(PLACEHOLDER_POSTER_URL, timeout=5)
-            img = Image.open(BytesIO(response.content))
-            st.image(img, use_container_width=True)
-        except:
-            st.markdown("<div style='height:450px; background:#eee; display:flex; align-items:center; justify-content:center;'>Poster unavailable</div>", unsafe_allow_html=True)
         return False
 
 # --- Load data ---
 movie_meta = load_movie_meta()
-if 'poster_url' not in movie_meta.columns:
-    movie_meta['poster_url'] = ''
 tfidf_matrix = load_tfidf_matrix()
 
 # --- App Layout ---
