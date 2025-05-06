@@ -13,21 +13,23 @@ PLACEHOLDER_POSTER_URL = "https://i.imgur.com/fvsXb7X.jpg"
 
 def safe_image_display(url):
     try:
-        if not url or not isinstance(url, str) or url.strip() == "":
-            raise ValueError("Invalid URL")
+        url = str(url)
+        if not url or url.lower() == 'nan':
+            raise ValueError("Invalid or missing URL")
         response = requests.get(url, timeout=5)
         img = Image.open(BytesIO(response.content))
         st.image(img, use_container_width=True)
         return True
-    except:
-        # Show placeholder image if actual image fails
+    except Exception as e:
+        # Try to display the placeholder
         try:
             response = requests.get(PLACEHOLDER_POSTER_URL, timeout=5)
             img = Image.open(BytesIO(response.content))
             st.image(img, use_container_width=True)
         except:
-            st.markdown("<div style='height:450px; background:#eee; display:flex; align-items:center; justify-content:center;'>Poster unavailable</div>", unsafe_allow_html=True)
+            st.markdown(\"\"\"<div style='height:450px; background:#eee; display:flex; align-items:center; justify-content:center;'>Poster unavailable</div>\"\"\", unsafe_allow_html=True)
         return False
+
 
 # --- Load data ---
 movie_meta = load_movie_meta()
