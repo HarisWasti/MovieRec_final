@@ -19,7 +19,7 @@ def safe_image_display(url):
 
     try:
         url = str(url)
-        if not url or url.strip().lower() in {"", "nan"}:
+        if not isinstance(url, str) or url.strip().lower() in {"", "nan", "none"}:
             raise ValueError("Invalid URL")
         response = requests.get(url, timeout=5)
         img = Image.open(BytesIO(response.content))
