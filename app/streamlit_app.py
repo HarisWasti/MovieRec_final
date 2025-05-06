@@ -1,24 +1,18 @@
 import streamlit as st
-st.set_page_config(page_title="Movie Recommender", layout="wide")
-
+import sqlite3
 import pandas as pd
-from data_loader import load_movie_meta, load_tfidf_matrix
-from rec_engine import hybrid_recommendations
+from data_loader import load_movie_meta
 import requests
 from PIL import Image
 from io import BytesIO
-from sklearn.neighbors import NearestNeighbors
-from scipy import sparse
 
-# --- Build KNN from saved sparse matrix ---
-@st.cache_resource
-def build_knn():
-    item_matrix = sparse.load_npz("data/item_movie_matrix.npz")
-    knn_model = NearestNeighbors(metric="cosine", algorithm="brute")
-    knn_model.fit(item_matrix)
-    return knn_model, item_matrix
+st.set_page_config(page_title="Movie Recommender", layout="wide")
 
-# --- Safe image rendering ---
+# --- Load data ---
+movie_meta = load_movie_meta()
+DB_PATH = "data/recommendations.db"
+
+# --- Image Display ---
 def safe_image_display(url):
     try:
         if not url or not isinstance(url, str) or url.strip() == "":
@@ -33,49 +27,31 @@ def safe_image_display(url):
         """, unsafe_allow_html=True)
         return False
 
-# --- Load data ---
-movie_meta = load_movie_meta()
-tfidf_matrix = load_tfidf_matrix()
-user_movie_ratings = pd.read_parquet("data/user_movie_ratings.parquet")
-knn, item_movie_matrix = build_knn()
-
 # --- App Layout ---
 st.title("Movie Recommendation System")
 
 if 'recommendations' not in st.session_state:
     st.subheader("Tell us what you like")
 
-    # Genre selection
-    st.markdown("### Pick at least one genre (you can select more):")
-    genres_list = sorted(set("|".join(movie_meta['genres'].dropna()).split('|')))
-    selected_genres = st.multiselect("Select genres", genres_list)
-
-    # Movie preference
-    st.markdown("### Pick movies you enjoy (up to 10):")
     all_titles = movie_meta['title'].dropna().unique().tolist()
-    selected_movie = st.selectbox("Pick one movie you enjoy", ["" ] + all_titles)
-    selected_movies = [selected_movie] if selected_movie else []
+    selected_movie = st.selectbox("Pick one movie you enjoy", [""] + all_titles)
 
-    if len(selected_movies) > 0 and st.button("Get Recommendations"):
-        seed_movie = selected_movies[0]
-        st.session_state['recommendations'] = hybrid_recommendations(
-            title_input=seed_movie,
-            movie_meta=movie_meta,
-            tfidf_matrix=tfidf_matrix,
-            item_movie_matrix=item_movie_matrix,
-            user_movie_ratings=user_movie_ratings,
-            knn=knn,
-            alpha=0.6,
-            penalty_weight=0.2,
-            top_k=9
-        )
-        st.session_state['selected_movies'] = selected_movies
-        st.rerun()
-
+    if selected_movie and st.button("Get Recommendations"):
+        with sqlite3.connect(DB_PATH) as conn:
+            query = "SELECT recommendations FROM recommendations WHERE movie_title = ?"
+            result = conn.execute(query, (selected_movie,)).fetchone()
+        
+        if result:
+            recs = result[0].split('|')
+            st.session_state['recommendations'] = recs
+            st.session_state['selected_movie'] = selected_movie
+            st.rerun()
+        else:
+            st.error("No recommendations found for this movie.")
     st.stop()
 
 # --- Show Recommendations ---
-st.subheader("Recommended for you:")
+st.subheader(f"Recommended for: {st.session_state['selected_movie']}")
 
 recs = st.session_state['recommendations']
 cols = st.columns(3)
@@ -88,28 +64,17 @@ for idx, movie in enumerate(recs[:9]):
             continue
         movie_info = movie_info.iloc[0]
 
-        with st.container():
-            safe_image_display(movie_info.get('poster_url', ''))
+        safe_image_display(movie_info.get('poster_url', ''))
+        st.markdown(f"**{movie}**")
+        st.caption(f"{movie_info['genres']} | {movie_info['director']} | {movie_info.get('age_rating', 'N/A')}")
 
-            st.markdown(f"**{movie}**")
-            meta_str = f"{movie_info['genres']} | {movie_info['director']} | {movie_info['age_rating'] or 'N/A'}"
-            st.caption(meta_str)
-
-            if movie_info['description']:
-                with st.expander("Description"):
-                    st.write(movie_info['description'])
+        if movie_info['description']:
+            with st.expander("Description"):
+                st.write(movie_info['description'])
 
 # --- Reset Button ---
 st.markdown("---")
 if st.button("Try Again"):
-    for key in ['recommendations', 'selected_movies']:
+    for key in ['recommendations', 'selected_movie']:
         st.session_state.pop(key, None)
     st.rerun()
-try:
-    movie_meta = load_movie_meta()
-    tfidf_matrix = load_tfidf_matrix()
-    user_movie_ratings = pd.read_parquet("data/user_movie_ratings.parquet")
-    knn, item_movie_matrix = build_knn()
-except Exception as e:
-    st.error(f"🚨 Error loading data: {e}")
-    st.stop()
