@@ -12,12 +12,16 @@ from io import BytesIO
 def safe_image_display(url):
     try:
         if not url or not isinstance(url, str) or url.strip() == "":
-            return False
+            raise ValueError("Invalid URL")
         response = requests.get(url, timeout=5)
         img = Image.open(BytesIO(response.content))
         st.image(img, use_container_width=True)
         return True
     except:
+        # Display blank space same height as image
+        st.markdown("""
+            <div style='height:450px; background-color:#eee; border:1px solid #ccc;'></div>
+        """, unsafe_allow_html=True)
         return False
 
 # --- Load data ---
@@ -81,3 +85,4 @@ if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
+
