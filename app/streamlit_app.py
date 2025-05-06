@@ -14,22 +14,20 @@ PLACEHOLDER_POSTER_URL = "https://i.imgur.com/fvsXb7X.jpg"
 def safe_image_display(url):
     try:
         url = str(url)
-        if not url or url.lower() == 'nan':
-            raise ValueError("Invalid or missing URL")
+        if not url or url.strip().lower() in {"", "nan"}:
+            raise ValueError("Invalid URL")
         response = requests.get(url, timeout=5)
         img = Image.open(BytesIO(response.content))
         st.image(img, use_container_width=True)
         return True
-    except Exception as e:
-        # Try to display the placeholder
+    except:
         try:
             response = requests.get(PLACEHOLDER_POSTER_URL, timeout=5)
             img = Image.open(BytesIO(response.content))
             st.image(img, use_container_width=True)
         except:
-            st.markdown(\"\"\"<div style='height:450px; background:#eee; display:flex; align-items:center; justify-content:center;'>Poster unavailable</div>\"\"\", unsafe_allow_html=True)
+            st.markdown("<div style='height:450px; background:#eee; display:flex; align-items:center; justify-content:center;'>Poster unavailable</div>", unsafe_allow_html=True)
         return False
-
 
 # --- Load data ---
 movie_meta = load_movie_meta()
@@ -49,7 +47,7 @@ if 'recommendations' not in st.session_state:
     # Movie preference
     st.markdown("### Pick movies you enjoy (up to 10):")
     all_titles = movie_meta['title'].dropna().unique().tolist()
-    selected_movie = st.selectbox("Pick one movie you enjoy", [""] + all_titles)
+    selected_movie = st.selectbox("Pick one movie you enjoy", ["" ] + all_titles)
     selected_movies = [selected_movie] if selected_movie else []
 
     if len(selected_movies) > 0 and st.button("Get Recommendations"):
@@ -92,3 +90,4 @@ if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
+
