@@ -3,7 +3,7 @@ st.set_page_config(page_title="Movie Recommender", layout="wide")
 
 import pandas as pd
 from data_loader import load_movie_meta, load_tfidf_matrix
-from rec_engine import cold_start_recommendations
+from rec_engine import hybrid_recommendations
 import requests
 from PIL import Image
 from io import BytesIO
