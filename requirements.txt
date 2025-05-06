@@ -1,13 +1,7 @@
 streamlit
-scikit-learn
 pandas
 numpy
-aiohttp
-nest_asyncio
-tqdm
-matplotlib
-seaborn
-requests
-gdown
+scikit-learn
+scipy
 Pillow
-joblib
+requests
