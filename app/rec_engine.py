@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-def cold_start_recommendations(fav_genres, fav_movies, tfidf_matrix, movie_meta, alpha=0.7, penalty_weight=0.3, k=9):
+def cold_start_recommendations(fav_genres, fav_movies, tfidf_matrix, movie_meta, alpha=0.7, penalty_weight=0.2, k=9):
     genre_bonus = movie_meta['genres'].str.contains('|'.join(fav_genres), case=False, na=False).astype(float)
 
     scores = np.zeros(tfidf_matrix.shape[0])
