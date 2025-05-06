@@ -28,7 +28,6 @@ def safe_image_display(url):
         st.image(img, use_container_width=True)
         return True
     except:
-        # Display blank space same height as image
         st.markdown("""
             <div style='height:600px; background-color:#eee; border:1px solid #ccc;'></div>
         """, unsafe_allow_html=True)
@@ -37,6 +36,7 @@ def safe_image_display(url):
 # --- Load data ---
 movie_meta = load_movie_meta()
 tfidf_matrix = load_tfidf_matrix()
+user_movie_ratings = pd.read_parquet("data/user_movie_ratings.parquet")
 knn, item_movie_matrix = build_knn()
 
 # --- App Layout ---
@@ -57,8 +57,17 @@ if 'recommendations' not in st.session_state:
     selected_movies = [selected_movie] if selected_movie else []
 
     if len(selected_movies) > 0 and st.button("Get Recommendations"):
+        seed_movie = selected_movies[0]
         st.session_state['recommendations'] = hybrid_recommendations(
-            selected_genres, selected_movies, tfidf_matrix, movie_meta
+            title_input=seed_movie,
+            movie_meta=movie_meta,
+            tfidf_matrix=tfidf_matrix,
+            item_movie_matrix=item_movie_matrix,
+            user_movie_ratings=user_movie_ratings,
+            knn=knn,
+            alpha=0.6,
+            penalty_weight=0.2,
+            top_k=9
         )
         st.session_state['selected_movies'] = selected_movies
         st.rerun()
@@ -96,4 +105,3 @@ if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
-
