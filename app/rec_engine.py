@@ -34,3 +34,4 @@ def cold_start_recommendations(fav_genres, fav_movies, tfidf_matrix, movie_meta,
     top_indices = scores.argsort()[::-1][:k]
     return movie_meta['title'].iloc[top_indices].tolist()
 
+
