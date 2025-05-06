@@ -9,15 +9,24 @@ from PIL import Image
 from io import BytesIO
 
 # --- Safe image rendering ---
+PLACEHOLDER_POSTER_URL = "https://i.imgur.com/fvsXb7X.jpg"
+
 def safe_image_display(url):
     try:
         if not url or not isinstance(url, str) or url.strip() == "":
-            return False
+            raise ValueError("Invalid URL")
         response = requests.get(url, timeout=5)
         img = Image.open(BytesIO(response.content))
         st.image(img, use_container_width=True)
         return True
     except:
+        # Show placeholder image if actual image fails
+        try:
+            response = requests.get(PLACEHOLDER_POSTER_URL, timeout=5)
+            img = Image.open(BytesIO(response.content))
+            st.image(img, use_container_width=True)
+        except:
+            st.markdown("<div style='height:450px; background:#eee; display:flex; align-items:center; justify-content:center;'>Poster unavailable</div>", unsafe_allow_html=True)
         return False
 
 # --- Load data ---
@@ -64,14 +73,8 @@ for idx, movie in enumerate(recs[:9]):
             continue
         movie_info = movie_info.iloc[0]
 
-        image_height = 625
         with st.container():
-            if not safe_image_display(movie_info.get('poster_url', '')):
-                st.markdown(
-                    f'<div style="height:{image_height}px; display:flex; align-items:center; justify-content:center; background-color:#eee; border:1px solid #ccc;">'
-                    'Poster unavailable</div>',
-                    unsafe_allow_html=True
-                )
+            safe_image_display(movie_info.get('poster_url', ''))
 
             st.markdown(f"**{movie}**")
             meta_str = f"{movie_info['genres']} | {movie_info['director']} | {movie_info['age_rating'] or 'N/A'}"
@@ -87,5 +90,3 @@ if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
-
-
