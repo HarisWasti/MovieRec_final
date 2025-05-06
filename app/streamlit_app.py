@@ -105,3 +105,11 @@ if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
+try:
+    movie_meta = load_movie_meta()
+    tfidf_matrix = load_tfidf_matrix()
+    user_movie_ratings = pd.read_parquet("data/user_movie_ratings.parquet")
+    knn, item_movie_matrix = build_knn()
+except Exception as e:
+    st.error(f"🚨 Error loading data: {e}")
+    st.stop()
