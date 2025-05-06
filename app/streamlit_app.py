@@ -57,7 +57,7 @@ if 'recommendations' not in st.session_state:
     selected_movies = [selected_movie] if selected_movie else []
 
     if len(selected_movies) > 0 and st.button("Get Recommendations"):
-        st.session_state['recommendations'] = cold_start_recommendations(
+        st.session_state['recommendations'] = hybrid_recommendations(
             selected_genres, selected_movies, tfidf_matrix, movie_meta
         )
         st.session_state['selected_movies'] = selected_movies
