@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-def cold_start_recommendations(fav_genres, fav_movies, tfidf_matrix, movie_meta, alpha=0.5, k=9):
+def cold_start_recommendations(fav_genres, fav_movies, tfidf_matrix, movie_meta, alpha=0.7, penalty_weight=0.2, k=9):
     genre_bonus = movie_meta['genres'].str.contains('|'.join(fav_genres), case=False, na=False).astype(float)
 
     scores = np.zeros(tfidf_matrix.shape[0])
@@ -20,6 +20,12 @@ def cold_start_recommendations(fav_genres, fav_movies, tfidf_matrix, movie_meta,
 
     scores /= valid_titles
     scores += 0.1 * genre_bonus.values
+
+    # Apply popularity penalty
+    if 'rating' in movie_meta.columns:
+        popularity = movie_meta['rating'].fillna(0).values
+        popularity = (popularity - popularity.min()) / (popularity.max() - popularity.min())
+        scores -= penalty_weight * popularity
 
     # Remove the original movies from results
     fav_indices = movie_meta[movie_meta['title'].str.lower().isin([t.lower() for t in fav_movies])].index
