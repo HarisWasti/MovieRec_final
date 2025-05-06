@@ -7,6 +7,16 @@ from rec_engine import cold_start_recommendations
 import requests
 from PIL import Image
 from io import BytesIO
+from sklearn.neighbors import NearestNeighbors
+from scipy import sparse
+
+# --- Build KNN from saved sparse matrix ---
+@st.cache_resource
+def build_knn():
+    item_matrix = sparse.load_npz("data/item_movie_matrix.npz")
+    knn_model = NearestNeighbors(metric="cosine", algorithm="brute")
+    knn_model.fit(item_matrix)
+    return knn_model, item_matrix
 
 # --- Safe image rendering ---
 def safe_image_display(url):
@@ -27,6 +37,7 @@ def safe_image_display(url):
 # --- Load data ---
 movie_meta = load_movie_meta()
 tfidf_matrix = load_tfidf_matrix()
+knn, item_movie_matrix = build_knn()
 
 # --- App Layout ---
 st.title("Movie Recommendation System")
