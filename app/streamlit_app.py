@@ -12,6 +12,11 @@ from io import BytesIO
 PLACEHOLDER_POSTER_URL = "https://i.imgur.com/fvsXb7X.jpg"
 
 def safe_image_display(url):
+    st.text(f"Rendering image from URL: {url}")
+    ...
+
+    st.text(f"Poster URL: {movie_info.get('poster_url', 'MISSING')}")
+
     try:
         url = str(url)
         if not url or url.strip().lower() in {"", "nan"}:
@@ -28,7 +33,6 @@ def safe_image_display(url):
         except:
             st.markdown("<div style='height:450px; background:#eee; display:flex; align-items:center; justify-content:center;'>Poster unavailable</div>", unsafe_allow_html=True)
         return False
-st.write("Poster URL:", movie_info.get('poster_url', 'N/A'))
 
 # --- Load data ---
 movie_meta = load_movie_meta()
