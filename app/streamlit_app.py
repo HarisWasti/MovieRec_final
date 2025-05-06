@@ -6,6 +6,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 
+# --- Safe image rendering ---
 def safe_image_display(url):
     try:
         if not url or not isinstance(url, str) or url.strip() == "":
@@ -17,14 +18,14 @@ def safe_image_display(url):
     except:
         return False
 
-# Load data
+# --- Load data ---
 movie_meta = load_movie_meta()
 tfidf_matrix = load_tfidf_matrix()
 
+# --- App Layout ---
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 st.title("Movie Recommendation System")
 
-# Step 1: Input genre and movie preferences
 if 'recommendations' not in st.session_state:
     st.subheader("Tell us what you like")
 
@@ -33,20 +34,22 @@ if 'recommendations' not in st.session_state:
     genres_list = sorted(set("|".join(movie_meta['genres'].dropna()).split('|')))
     selected_genres = st.multiselect("Select genres", genres_list)
 
-    # Movie search with autocomplete
+    # Movie preference
     st.markdown("### Pick movies you enjoy (up to 10):")
     all_titles = movie_meta['title'].dropna().unique().tolist()
     selected_movie = st.selectbox("Pick one movie you enjoy", [""] + all_titles)
     selected_movies = [selected_movie] if selected_movie else []
 
-
     if len(selected_movies) > 0 and st.button("Get Recommendations"):
-        st.session_state['recommendations'] = cold_start_recommendations(selected_genres, selected_movies, tfidf_matrix, movie_meta)
+        st.session_state['recommendations'] = cold_start_recommendations(
+            selected_genres, selected_movies, tfidf_matrix, movie_meta
+        )
         st.session_state['selected_movies'] = selected_movies
         st.rerun()
+
     st.stop()
 
-# Step 2: Show Recommendations
+# --- Show Recommendations ---
 st.subheader("Recommended for you:")
 
 recs = st.session_state['recommendations']
@@ -77,7 +80,7 @@ for idx, movie in enumerate(recs[:9]):
                 with st.expander("Description"):
                     st.write(movie_info['description'])
 
-# Reset option
+# --- Reset Button ---
 st.markdown("---")
 if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
