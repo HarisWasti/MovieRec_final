@@ -1,14 +1,12 @@
 import streamlit as st
+st.set_page_config(page_title="Movie Recommender", layout="wide")
+
 import pandas as pd
 from data_loader import load_movie_meta, load_tfidf_matrix
 from rec_engine import cold_start_recommendations
 import requests
 from PIL import Image
 from io import BytesIO
-
-# ✅ MUST BE FIRST streamlit command
-st.set_page_config(page_title="Movie Recommender", layout="wide")
-
 
 # --- Safe image rendering ---
 def safe_image_display(url):
@@ -27,7 +25,6 @@ movie_meta = load_movie_meta()
 tfidf_matrix = load_tfidf_matrix()
 
 # --- App Layout ---
-st.set_page_config(page_title="Movie Recommender", layout="wide")
 st.title("Movie Recommendation System")
 
 if 'recommendations' not in st.session_state:
@@ -90,4 +87,5 @@ if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
+
 
