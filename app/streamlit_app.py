@@ -12,13 +12,7 @@ from io import BytesIO
 PLACEHOLDER_POSTER_URL = "https://i.imgur.com/fvsXb7X.jpg"
 
 def safe_image_display(url):
-    st.text(f"Rendering image from URL: {url}")
-    ...
-
-    st.text(f"Poster URL: {movie_info.get('poster_url', 'MISSING')}")
-
     try:
-        url = str(url)
         if not isinstance(url, str) or url.strip().lower() in {"", "nan", "none"}:
             raise ValueError("Invalid URL")
         response = requests.get(url, timeout=5)
@@ -36,6 +30,8 @@ def safe_image_display(url):
 
 # --- Load data ---
 movie_meta = load_movie_meta()
+if 'poster_url' not in movie_meta.columns:
+    movie_meta['poster_url'] = ''
 tfidf_matrix = load_tfidf_matrix()
 
 # --- App Layout ---
@@ -95,4 +91,3 @@ if st.button("Try Again"):
     for key in ['recommendations', 'selected_movies']:
         st.session_state.pop(key, None)
     st.rerun()
-
