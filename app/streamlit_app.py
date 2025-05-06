@@ -6,6 +6,10 @@ import requests
 from PIL import Image
 from io import BytesIO
 
+# ✅ MUST BE FIRST streamlit command
+st.set_page_config(page_title="Movie Recommender", layout="wide")
+
+
 # --- Safe image rendering ---
 def safe_image_display(url):
     try:
