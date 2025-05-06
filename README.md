@@ -9,3 +9,5 @@ the script contains everything using the matrix's to make the recommendations.db
 the recommendations.db and movie_meta when then used to deploy the app
 
 the app folder contains all the files used to make the app(using the data folder)
+
+streamlit app ----> https://movierecfinal-zughwe3qfuekjxu4m4zu8i.streamlit.app/
