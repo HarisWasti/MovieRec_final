@@ -20,7 +20,7 @@ def safe_image_display(url):
     except:
         # Display blank space same height as image
         st.markdown("""
-            <div style='height:450px; background-color:#eee; border:1px solid #ccc;'></div>
+            <div style='height:530px; background-color:#eee; border:1px solid #ccc;'></div>
         """, unsafe_allow_html=True)
         return False
 
