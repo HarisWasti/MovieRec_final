@@ -6,4 +6,4 @@ movie_meta ----------------------------> recommendations
 tfidf_matrix
 user_movie_ratings
 
-they are all located in the matrix zip file
+The files are too big to store in Github
