@@ -28,6 +28,7 @@ def safe_image_display(url):
         except:
             st.markdown("<div style='height:450px; background:#eee; display:flex; align-items:center; justify-content:center;'>Poster unavailable</div>", unsafe_allow_html=True)
         return False
+st.write("Poster URL:", movie_info.get('poster_url', 'N/A'))
 
 # --- Load data ---
 movie_meta = load_movie_meta()
